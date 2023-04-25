@@ -1,4 +1,6 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { RequestPresigningArguments } from '@aws-sdk/types'
 import { BlobDescriptor, EngineInterface } from '@universal-packages/storage'
 import { S3EngineOptions } from './S3Engine.types'
 import { IncomingMessage } from 'http'
@@ -60,8 +62,13 @@ export default class S3Engine implements EngineInterface {
     return Body as any
   }
 
-  public retrieveUri(token: string): string {
-    return `https://${this.options.bucket}.s3.amazonaws.com/${token}`
+  public async retrieveUri(token: string, options?: RequestPresigningArguments): Promise<string> {
+    if (options) {
+      const command = new GetObjectCommand({ Bucket: this.options.bucket, Key: token })
+      return await getSignedUrl(this.client, command, options)
+    } else {
+      return `https://${this.options.bucket}.s3.amazonaws.com/${token}`
+    }
   }
 
   public async dispose(token: string): Promise<void> {
