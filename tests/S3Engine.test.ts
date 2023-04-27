@@ -17,7 +17,7 @@ jest.mock('@aws-sdk/client-s3', (): any => ({
 }))
 jest.mock('@aws-sdk/s3-request-presigner')
 
-describe('Registry::S3Engine', (): void => {
+describe('Storage::S3Engine', (): void => {
   it('behaves as expected', async (): Promise<void> => {
     const engine = new S3Engine({ bucket: 'universal-development', acl: 'public-read' })
     const storage = new Storage({ engine })
