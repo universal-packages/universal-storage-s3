@@ -1,4 +1,4 @@
-import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand, S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3'
 import { Storage } from '@universal-packages/storage'
 import { S3Engine } from '../src'
 import EventEmitter from 'events'
@@ -13,7 +13,8 @@ jest.mock('@aws-sdk/client-s3', (): any => ({
   },
   PutObjectCommand: jest.fn(),
   GetObjectCommand: jest.fn(),
-  DeleteObjectCommand: jest.fn()
+  DeleteObjectCommand: jest.fn(),
+  ListObjectsV2Command: jest.fn()
 }))
 jest.mock('@aws-sdk/s3-request-presigner')
 
@@ -24,7 +25,7 @@ describe('Storage::S3Engine', (): void => {
 
     expect(storage).toMatchObject({ engine: expect.any(S3Engine) })
 
-    const token = await storage.store({ data: Buffer.from('Hola'), filename: 'test.txt' })
+    const key = await storage.store({ data: Buffer.from('Hola'), name: 'test.txt' })
 
     expect(PutObjectCommand).toHaveBeenCalledWith({
       ACL: 'public-read',
@@ -32,10 +33,10 @@ describe('Storage::S3Engine', (): void => {
       Bucket: 'universal-development',
       ContentDisposition: 'filename="test.txt"',
       ContentType: undefined,
-      Key: token
+      Key: key
     })
 
-    const retrievePromise = storage.retrieve(token)
+    const retrievePromise = storage.retrieve(key)
 
     setTimeout(() => stream.emit('end'), 100)
 
@@ -43,25 +44,30 @@ describe('Storage::S3Engine', (): void => {
 
     expect(GetObjectCommand).toHaveBeenCalledWith({
       Bucket: 'universal-development',
-      Key: token
+      Key: key
     })
 
-    expect(await storage.retrieveStream(token)).toBe(stream)
+    expect(await storage.retrieveStream(key)).toBe(stream)
 
-    expect(await storage.retrieveUri(token)).toBe(`https://universal-development.s3.amazonaws.com/${token}`)
+    expect(await storage.retrieveUri(key)).toBe(`https://universal-development.s3.amazonaws.com/${key}`)
 
-    await storage.dispose(token)
+    await storage.dispose(key)
+
+    expect(ListObjectsV2Command).toHaveBeenCalledWith({
+      Bucket: 'universal-development',
+      Prefix: `${key}-V`
+    })
 
     expect(DeleteObjectCommand).toHaveBeenCalledWith({
       Bucket: 'universal-development',
-      Key: token
+      Key: key
     })
 
-    await storage.retrieveUri(token, { expiresIn: 100 })
+    await storage.retrieveUri(key, { expiresIn: 100 })
 
     expect(GetObjectCommand).toHaveBeenCalledWith({
       Bucket: 'universal-development',
-      Key: token
+      Key: key
     })
     expect(getSignedUrl).toHaveBeenCalledWith(expect.any(S3Client), expect.any(GetObjectCommand), { expiresIn: 100 })
   })

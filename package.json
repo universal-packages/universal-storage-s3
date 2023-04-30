@@ -19,7 +19,7 @@
     "@aws-sdk/s3-request-presigner": "^3.319.0"
   },
   "peerDependencies": {
-    "@universal-packages/storage": "^1.5.0"
+    "@universal-packages/storage": "^1.6.0"
   },
   "devDependencies": {
     "@types/jest": "^28.1.0",

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { RequestPresigningArguments } from '@aws-sdk/types'
 import { BlobDescriptor, EngineInterface } from '@universal-packages/storage'
@@ -22,22 +22,22 @@ export default class S3Engine implements EngineInterface {
     })
   }
 
-  public async store<PutObjectCommandInput>(token: string, descriptor: BlobDescriptor, options: PutObjectCommandInput): Promise<void> {
+  public async store<PutObjectCommandInput>(key: string, descriptor: BlobDescriptor, options: PutObjectCommandInput): Promise<void> {
     const command = new PutObjectCommand({
       ACL: this.options.acl,
       ...options,
       Bucket: this.options.bucket,
-      Key: token,
+      Key: key,
       ContentType: descriptor.mimetype,
-      ContentDisposition: `filename="${descriptor.filename}"`,
+      ContentDisposition: `filename="${descriptor.name}"`,
       Body: descriptor.data
     })
 
     await this.client.send(command)
   }
 
-  public async retrieve(token: string): Promise<Buffer> {
-    const stream = await this.retrieveStream(token)
+  public async retrieve(key: string): Promise<Buffer> {
+    const stream = await this.retrieveStream(key)
 
     return new Promise((resolve, reject): void => {
       const chunks: Buffer[] = []
@@ -56,23 +56,36 @@ export default class S3Engine implements EngineInterface {
     })
   }
 
-  public async retrieveStream<S = IncomingMessage>(token: string): Promise<S> {
-    const command = new GetObjectCommand({ Bucket: this.options.bucket, Key: token })
+  public async retrieveStream<S = IncomingMessage>(key: string): Promise<S> {
+    const command = new GetObjectCommand({ Bucket: this.options.bucket, Key: key })
     const { Body } = await this.client.send(command)
     return Body as any
   }
 
-  public async retrieveUri(token: string, options?: RequestPresigningArguments): Promise<string> {
+  public async retrieveUri(key: string, options?: RequestPresigningArguments): Promise<string> {
     if (options) {
-      const command = new GetObjectCommand({ Bucket: this.options.bucket, Key: token })
+      const command = new GetObjectCommand({ Bucket: this.options.bucket, Key: key })
       return await getSignedUrl(this.client, command, options)
     } else {
-      return `https://${this.options.bucket}.s3.amazonaws.com/${token}`
+      return `https://${this.options.bucket}.s3.amazonaws.com/${key}`
     }
   }
 
-  public async dispose(token: string): Promise<void> {
-    const command = new DeleteObjectCommand({ Bucket: this.options.bucket, Key: token })
+  public async dispose(key: string): Promise<void> {
+    const command = new DeleteObjectCommand({ Bucket: this.options.bucket, Key: key })
     await this.client.send(command)
+  }
+
+  public async disposeDirectory(key: string): Promise<void> {
+    const listCommand = new ListObjectsV2Command({ Bucket: this.options.bucket, Prefix: key })
+    const { Contents } = await this.client.send(listCommand)
+
+    if (Contents) {
+      const deleteListCommand = new DeleteObjectsCommand({ Bucket: this.options.bucket, Delete: { Objects: Contents.map(({ Key }) => ({ Key })) } })
+      await this.client.send(deleteListCommand)
+    }
+
+    const deleteCommand = new DeleteObjectCommand({ Bucket: this.options.bucket, Key: key })
+    await this.client.send(deleteCommand)
   }
 }
