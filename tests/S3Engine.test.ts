@@ -1,8 +1,9 @@
-import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand, S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3'
-import { Storage } from '@universal-packages/storage'
-import { S3Engine } from '../src'
-import EventEmitter from 'events'
+import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { Storage } from '@universal-packages/storage'
+import EventEmitter from 'events'
+
+import { S3Engine } from '../src'
 
 const stream = new EventEmitter()
 const sendMock = jest.fn().mockImplementation((): any => ({ Body: stream }))
