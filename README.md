@@ -24,7 +24,7 @@ import { S3Engine } from '@universal-packages/universal-storage-s3'
 
 const storage = new Storage({ engine: 's3', engineOptions: { region: 'us-east-1' } })
 
-await registry.initialize()
+await registry.prepare()
 ```
 
 ### Options
