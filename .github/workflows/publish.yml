@@ -16,8 +16,6 @@ jobs:
           node-version: 18
           registry-url: https://registry.npmjs.org/
 
-      - run: sudo apt update && sudo apt install redis
-      - run: sudo systemctl start redis
       - run: npm install
       - run: npm run test:full
       - run: npm run build
