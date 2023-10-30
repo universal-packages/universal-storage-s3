@@ -1,6 +1,6 @@
 {
   "name": "@universal-packages/storage-s3",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "description": "Aws s3 engine for universal-storage",
   "author": "David De Anda <david@universal-packages.com> (https://github.com/universal-packages)",
   "license": "MIT",
