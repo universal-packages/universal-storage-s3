@@ -20,7 +20,7 @@
     "@aws-sdk/s3-request-presigner": "^3.428.0"
   },
   "peerDependencies": {
-    "@universal-packages/storage": "^1.9.3"
+    "@universal-packages/storage": "^1.10.0"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.2.0",
