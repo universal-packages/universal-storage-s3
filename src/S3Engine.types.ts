@@ -5,5 +5,5 @@ export interface S3EngineOptions {
   accessKeyId?: string
   secretAccessKey?: string
   region?: string
-  acl?: ObjectCannedACL | string
+  acl?: ObjectCannedACL
 }
