@@ -48,7 +48,7 @@ export default class S3Engine implements EngineInterface {
       })
 
       stream.on('end', (): void => {
-        resolve(Buffer.concat(chunks))
+        resolve(Buffer.concat(chunks.map((chunk) => new Uint8Array(chunk))))
       })
 
       stream.on('error', (error: Error): void => {
